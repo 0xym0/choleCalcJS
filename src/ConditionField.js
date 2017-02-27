@@ -11,7 +11,7 @@ class ConditionField extends Component {
     }
 
     patientHasDiabetesChange(e) {
-        var value = parseInt(e.target.value, 10);
+        const value = parseInt(e.target.value, 10);
         if (value === 1) {
             this.setState({
                 visibleComplications: true,
@@ -26,16 +26,12 @@ class ConditionField extends Component {
     }
 
     patientHasComplicationsChange(e) {
-        var value = parseInt(e.target.value, 10);
         this.setState({
-            hasComplications: value
+            hasComplications: parseInt(e.target.value, 10)
         });
     }
 
     render() {
-
-        var isVisible = this.state.visibleComplications;
-
         return (
             <div className="form-group">
                 <label>Есть ли у пациента сахарный диабет?</label>
@@ -51,7 +47,7 @@ class ConditionField extends Component {
                     </label>
                 </div>
 
-                <div className={'form-group ' + (isVisible ? '' : 'hidden')}>
+                <div className={'form-group ' + (this.state.visibleComplications ? '' : 'hidden')}>
                     <label>Имеются ли осложнения?</label>
                     <div className="radio" id="patient-has-complications">
                         <label className="radio-inline">

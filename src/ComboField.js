@@ -11,10 +11,9 @@ class ComboField extends Component {
     }
 
     fieldValueChange(e) {
-        var value = e.target.value;
         this.setState({
-            fieldValue: value
-        })
+            fieldValue: parseFloat(e.target.value)
+        });
     }
 
     dimensionNameChange(e) {
@@ -30,7 +29,7 @@ class ComboField extends Component {
             <div className="form-group">
                 <label>{this.props.inputLabel}</label>
                 <div className="input-group">
-                    <input className="form-control" type="number" min="0" id={this.props.inputID} name={this.props.inputName} onChange={this.fieldValueChange.bind(this)} value={this.state.fieldValue} />
+                    <input className="form-control" type="number" min={this.state.dimensionType === 1 ? 0 : 0.0} max={this.state.dimensionType === 1 ? 500 : 20.0} step={this.state.dimensionType === 1 ? 1 : 0.01} required="required" id={this.props.inputID} name={this.props.inputName} onChange={this.fieldValueChange.bind(this)} value={this.state.fieldValue} />
                     <div className="input-group-btn">
                         <button type="button" className="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{this.state.dimensionName} <span className="caret"></span></button>
                         <ul className="dropdown-menu dropdown-menu-right">
