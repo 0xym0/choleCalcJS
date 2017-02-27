@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
-import Countries from './Countries'
-import ComboField from './ComboField'
-import ConditionField from './ConditionField'
-import scoresTable from './scoresData'
+import React, {Component} from "react";
+import Countries from "./Countries";
+import ComboField from "./ComboField";
+import ConditionField from "./ConditionField";
+import scoresTable from "./scoresData";
 
 class App extends Component {
     constructor(props) {
@@ -46,21 +46,35 @@ class App extends Component {
         });
     }
 
-    medicineCalculation(deltaLPNP) {
+    medicineCalculation(deltaLPNP, patientAge, isRisk) {
         if (deltaLPNP >= 0) {
+            if (patientAge <= 40) {
+                if (isRisk) {
+                    return "Высокий риск развития сердечно-сосудистых осложнений. Учитывая молодой возраст, назначение статинов не показано. Рекомендовано расширение физической активности и коррекция диеты.";
+                } else {
+                    return "Назначение или коррекция дозы статинов не требуется."
+                }
+            }
+
             if (deltaLPNP <= 0.37) {
                 return "Аторвастатин в дозе 10 мг/сутки или Розувастатин в дозе 5 мг/сутки.";
+            } else if (deltaLPNP <= 0.38) {
+                return "Аторвастатин в дозе 20 мг/сутки или Розувастатин в дозе 5 мг/сутки.";
             } else if (deltaLPNP <= 0.43) {
                 return "Аторвастатин в дозе 20 мг/сутки или Розувастатин в дозе 10 мг/сутки.";
-            } else if (deltaLPNP <= 0.49) {
+            } else if (deltaLPNP <= 0.48) {
                 return "Аторвастатин в дозе 40 мг/сутки или Розувастатин в дозе 20 мг/сутки.";
-            } else if (deltaLPNP <= 0.55) {
+            } else if (deltaLPNP <= 0.49) {
+                return "Аторвастатин в дозе 40 мг/сутки или Розувастатин в дозе 40 мг/сутки.";
+            } else if (deltaLPNP <= 0.53) {
                 return "Аторвастатин в дозе 80 мг/сутки или Розувастатин в дозе 40 мг/сутки.";
+            } else if (deltaLPNP <= 0.55) {
+                return "Аторвастатин в дозе 80 мг/сутки или Розувастатин в дозе 40 мг/сутки. Это максимально допустимые дозы препаратов. В случае назначения Розувастатина, необходимо будет принять дополнительные меры по снижению уровня холестерина в крови.";
             } else {
                 return "Аторвастатин в дозе 80 мг/сутки или Розувастатин в дозе 40 мг/сутки. Это максимально допустимые дозы препаратов, однако их в данном случае недостаточно. Необходимо принять дополнительные меры по снижению уровня холестерина в крови.";
             }
         } else {
-            return "Текущие показатели ЛПНП-холестерина не превышают целевого значения. Назначение или коррекция дозы статинов не требуется."
+            return "Назначение или коррекция дозы статинов не требуется."
         }
     }
 
@@ -81,12 +95,14 @@ class App extends Component {
         patient.cholesterolLPNP = (this.patientCholesterolLPNP.state.dimensionType === 1) ?
             Math.round(this.patientCholesterolLPNP.state.fieldValue * 0.0259) :
             Math.round(this.patientCholesterolLPNP.state.fieldValue);
+        patient.cholesterolTable = (patient.cholesterol <= 4) ? 4 :
+            ((patient.cholesterol >= 8) ? 8 : patient.cholesterol);
         patient.targetLPNP = 3.0;
         patient.countryCode = this.patientCountry.state.patientCountry;
         patient.countryType = this.patientCountry.state.patientCountryType;
         patient.hasDiabetes = this.patientDiabetes.state.hasDiabetes;
         patient.hasComplications = this.patientDiabetes.state.hasComplications;
-        return patient
+        return patient;
     }
 
     handleSubmit(e) {
@@ -105,7 +121,7 @@ class App extends Component {
                     patient.pressureSist >= row.pressureLow &&
                     patient.pressureSist <= row.pressureHigh &&
                     patient.isSmoking === row.smoking &&
-                    patient.cholesterol === row.cholesterol
+                    patient.cholesterolTable === row.cholesterol
             );
         });
 
@@ -114,48 +130,36 @@ class App extends Component {
             patient.filterSpeed < 30 ||
             (patient.hasDiabetes === 1 && patient.hasComplications === 3 && (patient.isSmoking === 1 || patient.hasFamilyHyperchole === 1 || patient.pressureSist > 140 || patient.pressureDiast > 90 || patient.cholesterol > 8)) ||
             (patient.hasHeartIllness === 1 || patient.hasArteryOperated === 1 || patient.hasDiabetes === 2 || patient.hasComplications > 3)) {
+            patient.targetLPNP = (patient.cholesterolLPNP > 3.5) ? 1.8 : (patient.cholesterolLPNP / 2);
 
             this.setState({resultRiskGroup: 'очень высокий риск'});
-            patient.targetLPNP = (patient.cholesterolLPNP > 3.5) ? 1.8 : (patient.cholesterolLPNP / 2);
             this.setState({resultLPNPLevel: patient.targetLPNP + ' ммоль/л'});
-            if (patient.age <= 40) {
-                this.setState({resultRecommendations: "Высокий риск развития сердечно-сосудистых осложнений. Учитывая молодой возраст, назначение статинов не показано. Рекомендовано расширение физической активности и коррекция диеты."});
-            } else {
-                this.setState({resultRecommendations: this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP)});
-            }
+            this.setState({resultRecommendations:
+                this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP, patient.age, true)});
         } else if ((rec.score >= 5 && rec.score < 10) ||
             (patient.hasFamilyHyperchole === 1 || patient.pressureSist > 180 || patient.pressureDiast > 110) ||
             (patient.filterSpeed >= 30 && patient.filterSpeed <= 59)) {
+            patient.targetLPNP = (patient.cholesterolLPNP > 5.1) ? 2.6 : (patient.cholesterolLPNP / 2);
 
             this.setState({resultRiskGroup: 'высокий риск'});
-            patient.targetLPNP = (patient.cholesterolLPNP > 5.1) ? 2.6 : (patient.cholesterolLPNP / 2);
             this.setState({resultLPNPLevel: patient.targetLPNP + ' ммоль/л'});
-            if (patient.age <= 40) {
-                this.setState({resultRecommendations: "Высокий риск развития сердечно-сосудистых осложнений. Учитывая молодой возраст, назначение статинов не показано. Рекомендовано расширение физической активности и коррекция диеты."});
-            } else {
-                this.setState({resultRecommendations: this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP)});
-            }
+            this.setState({resultRecommendations:
+                this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP, patient.age, true)});
         } else if ((rec.score >= 1 && rec.score < 5) ||
             (patient.hasDiabetes === 1 && patient.hasComplications === 3)) {
             this.setState({resultRiskGroup: 'умеренный риск'});
             this.setState({resultLPNPLevel: patient.targetLPNP + ' ммоль/л'});
-            if (patient.age <= 40) {
-                this.setState({resultRecommendations: "Назначение или коррекция дозы статинов не требуется."});
-            } else {
-                this.setState({resultRecommendations: this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP)});
-            }
+            this.setState({resultRecommendations:
+                this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP, patient.age, false)});
         } else if (rec.score < 1) {
             this.setState({resultRiskGroup: 'низкий риск'});
             this.setState({resultLPNPLevel: patient.targetLPNP + ' ммоль/л'});
-            if (patient.age <= 40) {
-                this.setState({resultRecommendations: "Назначение или коррекция дозы статинов не требуется."});
-            } else {
-                this.setState({resultRecommendations: this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP)});
-            }
+            this.setState({resultRecommendations:
+                this.medicineCalculation(patient.cholesterolLPNP - patient.targetLPNP, patient.age, false)});
         } else {
             this.setState({resultRiskGroup: 'неопределённый риск'});
             this.setState({resultLPNPLevel: 'не определён'});
-            this.setState({resultRecommendations: "Проконсультируйтесь со специалистом."});
+            this.setState({resultRecommendations: "Введены некорректные параметры расчёта."});
         }
         this.setState({calculationReady: true});
     }

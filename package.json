@@ -2,6 +2,8 @@
   "name": "choleCalcJS",
   "version": "0.1.0",
   "private": true,
+  "author": "Petr Martynov",
+  "homepage": "http://localhost/choleCalc",
   "devDependencies": {
     "react-scripts": "0.9.0"
   },
